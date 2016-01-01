@@ -16,10 +16,10 @@ import udata.pubsub.{PubSubManager, PubSubManagerActor}
 
 object MongoPubSubManagerActor {
 
-  case class LoadRequest(key: String, bytes: Array[Byte])
-  case object LoadSearch
-  case object MarkConnected
-  case object Clean
+  private [pubsub] case class LoadRequest(key: String, bytes: Array[Byte])
+  private [pubsub] case object LoadSearch
+  private [pubsub] case object MarkConnected
+  private [pubsub] case object Clean
 
   val pingFrequency = 10.seconds
   val localTimeout = 25.seconds
@@ -47,6 +47,8 @@ trait MongoPubSubManagerActor extends Actor {
 
   connectionCollection.indexesManager.ensure(Index(background = true, unique = false, key = List(("key", IndexType.Ascending))))
   dataCollection.indexesManager.ensure(Index(background = true, unique = false, key = List(("key", IndexType.Ascending))))
+  dataCollection.indexesManager.ensure(Index(background = true, unique = true, key = List(("transactionId", IndexType.Ascending))))
+
 
   self ! MarkConnected
   self ! LoadSearch
@@ -93,14 +95,11 @@ trait MongoPubSubManagerActor extends Actor {
 
 
   def save(key: String, payload: Array[Byte]) {
-    val transactionId = java.util.UUID.randomUUID.toString
     val listenersSelector = BSONDocument("key" -> key, "lastConnect" -> BSONDocument("$gt" -> (System.currentTimeMillis - mongoTimeout.toMillis)))
     connectionCollection.find(listenersSelector, BSONDocument("listenerId" -> 1)).cursor[BSONDocument].collect[List]().onSuccess { case retains =>
-      var rts = BSONArray()
-      retains.foreach { x =>
-        rts = rts.add(BSONDocument("listenerId" -> x.get("listenerId").get.asInstanceOf[BSONString].value))
-      }
       if (!retains.isEmpty) {
+        val transactionId = java.util.UUID.randomUUID.toString
+        val rts = retains.foldRight(BSONArray()){ (a, b) => b.add(BSONDocument("listenerId" -> a.get("listenerId").get.asInstanceOf[BSONString].value)) }
         val doc = BSONDocument(
           "payload" -> payload,
           "retains" -> rts,
@@ -160,7 +159,7 @@ trait MongoPubSubManagerActor extends Actor {
   }
 
   private def scheduleSearch() {
-    in(400.milliseconds) {
+    in(300.milliseconds) {
       self ! LoadSearch
     }
   }
@@ -178,7 +177,7 @@ trait MongoPubSubManagerActor extends Actor {
     val update = BSONDocument("$inc" -> BSONDocument("retainCt" -> -1), "$pull" -> BSONDocument(s"retains" -> BSONDocument("listenerId" -> listenerId)))
     dataCollection.findAndUpdate(selector, update, fetchNewObject = true, upsert = false).flatMap { x =>
       x.value.filter(_.get("retainCt").get.asInstanceOf[BSONInteger].value == 0).map { q =>
-        dataCollection.remove(BSONDocument(key -> key, "transactionId" -> transactionId), writeConcern = GetLastError.Acknowledged)
+        dataCollection.remove(BSONDocument("transactionId" -> transactionId), writeConcern = GetLastError.Acknowledged)
       }.getOrElse(Future.successful(Unit))
     }
   }

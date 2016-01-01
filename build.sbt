@@ -4,7 +4,7 @@ lazy val commonSettings = Seq(
   organization := "com.kperson",
   version := "0.0.2-SNAPSHOT",
   scalaVersion := "2.11.7",
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:existentials"),
   publishTo := {
     if (isSnapshot.value)
       Some(Resolver.file("file", new File(env("FILE_PUBLISH").getOrElse(Path.userHome.getAbsolutePath + "/Dropbox/Public/maven/") + "snapshot")))
@@ -12,7 +12,7 @@ lazy val commonSettings = Seq(
       Some(Resolver.file("file", new File(env("FILE_PUBLISH").getOrElse(Path.userHome.getAbsolutePath + "/Dropbox/Public/maven/") + "release")))
   },
   libraryDependencies := Seq(
-    "com.kperson"              %% "structures"     % "0.0.17-SNAPSHOT",
+    "com.kperson"              %% "structures"     % "0.0.19-SNAPSHOT",
     "org.scalatest"            %% "scalatest"      % "2.2.4"           % "test",
     "com.google.code.findbugs" %  "jsr305"         % "3.0.1"           % "test",
     "com.github.docker-java"   %  "docker-java"    % "3.0.0-SNAPSHOT"  % "test"
