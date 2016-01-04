@@ -4,12 +4,9 @@ import awscala._, s3._
 
 import org.scalatest.BeforeAndAfterAll
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 
-import udata.directory.{DirectoryListing, DirectorySpec}
-import udata.util.TestUtils._
+import udata.directory.DirectorySpec
 
 
 class TestS3Directory extends S3Directory {

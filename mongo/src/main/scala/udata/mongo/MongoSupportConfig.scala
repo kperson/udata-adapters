@@ -22,6 +22,8 @@ class MongoSupportConfig {
   lazy val countCollection = s"${collectionPrefix}_count"
   lazy val lockCollection = s"${collectionPrefix}_lock"
   lazy val pubSubCollection = s"${collectionPrefix}_pubsub"
+  lazy val pubSubConnectionCollection = s"${collectionPrefix}_pubsub_connection"
+
   lazy val queueCollection = s"${collectionPrefix}_queue"
   lazy val directoryCollection = s"${collectionPrefix}_queue"
 
