@@ -1,6 +1,6 @@
 package udata.mongo.lock
 
-import akka.actor.Actor
+import akka.actor.{DeadLetter, Actor}
 import akka.pattern.pipe
 
 import reactivemongo.api.indexes.{IndexType, Index}
@@ -18,7 +18,7 @@ import udata.lock.LockManager._
 
 object MongoLockManager {
 
-  case object Monitor
+  private [lock] case object Monitor
 
 }
 
@@ -38,6 +38,7 @@ trait MongoLockManager extends Actor {
 
   self ! Monitor
 
+  context.system.eventStream.subscribe(self, classOf[DeadLetter])
 
   def receive = {
     case Monitor => monitor()
@@ -45,6 +46,8 @@ trait MongoLockManager extends Actor {
       val recipient = sender
       lock(resource, acquireTimeout, holdTimeout).pipeTo(recipient)
     case LockReleaseRequest(resource, auto) => unlock(resource)
+    case DeadLetter(LockGrant(resource), from, to) => self ! LockReleaseRequest(resource, true)
+
   }
 
 

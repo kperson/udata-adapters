@@ -11,7 +11,7 @@ import udata.lock.LockManagerSpec
 import udata.mongo.MongoSpec
 
 
-class TestMongoLockManger(database: DefaultDB) extends  MongoLockManager  {
+class TestMongoLockManager(database: DefaultDB) extends MongoLockManager  {
 
   lazy val mongoCollection = database(java.util.UUID.randomUUID.toString.replace("-", "").substring(0, 10))
 
@@ -19,6 +19,8 @@ class TestMongoLockManger(database: DefaultDB) extends  MongoLockManager  {
 
 class MongoLockManagerSpec extends MongoSpec with ScalaFutures with Matchers with LockManagerSpec {
 
-  def lockManager(system: ActorSystem): ActorRef = system.actorOf(Props(new TestMongoLockManger(database)))
+  def displayName = "Mongo Lock Manager"
+
+  def lockManager(system: ActorSystem): ActorRef = system.actorOf(Props(new TestMongoLockManager(database)))
 
 }

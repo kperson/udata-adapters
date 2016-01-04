@@ -17,6 +17,9 @@ class TestMongoPubSubManager(val manager: PubSubManager[Array[Byte]], database: 
 
 class MongoPubSubManagerActorSpec extends PubSubManagerActorSpec with MongoSpec {
 
+  def displayName = "Mongo PubSub Manager Actor"
+
+
   def system = driver.system
 
   def withManager(manager: PubSubManager[Array[Byte]])(testCode: (ActorRef) => Unit) {

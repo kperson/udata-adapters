@@ -16,9 +16,12 @@ class TestMongoQueueManager(val manager: AsyncQueueManager[Array[Byte]], databas
 
 class MongoAsyncQueueManagerActorSpec extends AsyncQueueManagerActorSpec with MongoSpec {
 
+  def displayName = "Mongo Async Queue Manager Actor"
+
   def withManager(manager: AsyncQueueManager[ByteArray])(testCode: (ActorRef) => Unit) {
     val actorRef = system.actorOf(Props(new TestMongoQueueManager(manager, database)))
     testCode(actorRef)
+    system.stop(actorRef)
   }
 
   def system: ActorSystem = driver.system

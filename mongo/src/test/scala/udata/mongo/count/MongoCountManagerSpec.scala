@@ -19,6 +19,8 @@ class TestMongoCountManger(database: DefaultDB) extends MongoCountManager  {
 
 class MongoCountManagerSpec extends MongoSpec with CountManagerSpec {
 
+  def displayName = "Mongo Count Manager"
+
   def countManager(system: ActorSystem): ActorRef = system.actorOf(Props(new TestMongoCountManger(database)))
 
 }

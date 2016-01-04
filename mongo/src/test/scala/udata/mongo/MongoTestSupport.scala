@@ -16,7 +16,7 @@ trait MongoSpec extends FlatSpec with BeforeAndAfterAll with MongoSupport {
   import driver.system.dispatcher
 
   lazy val (host, port, close) = mongoServer
-  Thread.sleep(2000)
+  Thread.sleep(3000)
   lazy val connection:MongoConnection = driver.connection(List(s"${host}:${port}"))
   lazy val database:DefaultDB = connection(java.util.UUID.randomUUID.toString.replace("-", "").substring(0, 5))
 
