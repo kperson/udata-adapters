@@ -36,9 +36,11 @@ trait MongoCountManager extends Actor {
 
   def receive = {
     case UpdateCountRequest(resourceKey, count, ttl, replaceKey) =>
+      println("kfdfjdiojioji")
       val recipient = sender
       update(resourceKey, count, ttl, replaceKey).pipeTo(recipient)
     case ResourceCountRequest(resourceKey) =>
+      println(resourceKey)
       val recipient = sender
       findCount(resourceKey).map{ ResourceCountResponse(_) } pipeTo(recipient)
     case CleanExpiredCounts => clean()

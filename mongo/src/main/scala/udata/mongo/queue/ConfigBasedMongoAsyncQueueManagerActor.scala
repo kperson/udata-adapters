@@ -6,7 +6,7 @@ import udata.mongo.MongoSupportConfig
 import udata.queue.AsyncQueueManager
 
 
-class ConfigBasedMongoAsyncQueueManagerActor extends MongoAsyncQueueManagerActor {
+class ConfigBasedMongoAsyncQueueManagerActor() extends MongoAsyncQueueManagerActor {
 
   lazy val config = MongoSupportConfig.defaultConfig
   lazy val dataCollection: BSONCollection = config.database(config.queueCollection)

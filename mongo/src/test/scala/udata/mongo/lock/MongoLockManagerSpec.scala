@@ -19,8 +19,9 @@ class TestMongoLockManager(database: DefaultDB) extends MongoLockManager  {
 
 class MongoLockManagerSpec extends MongoSpec with ScalaFutures with Matchers with LockManagerSpec {
 
-  def displayName = "Mongo Lock Manager"
+  lazy val displayName = "Mongo Lock Manager"
 
   def lockManager(system: ActorSystem): ActorRef = system.actorOf(Props(new TestMongoLockManager(database)))
+
 
 }

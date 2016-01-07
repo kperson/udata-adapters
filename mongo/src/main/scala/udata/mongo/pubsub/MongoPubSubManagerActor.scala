@@ -22,9 +22,9 @@ object MongoPubSubManagerActor {
   private [pubsub] case object Clean
 
   val pingFrequency = 10.seconds
-  val localTimeout = 25.seconds
-  val mongoTimeout = 40.seconds
-  val consumeTimeout = 30.minutes
+  val localTimeout = pingFrequency * 2.5
+  val mongoTimeout = localTimeout + 15.seconds
+  val consumeTimeout = mongoTimeout * 2
 
 }
 
@@ -57,7 +57,7 @@ trait MongoPubSubManagerActor extends Actor {
   def receive = {
     case AddListenerRequest(key) =>
       val listener = sender
-      val hasListenersAlready:Boolean = manager.keys.contains(key)
+      val hasListenersAlready = manager.keys.contains(key)
       val actorId = manager.addListener(key) { x =>
         listener ! PushedData(x.dataId, x.payload)
       }
@@ -70,7 +70,8 @@ trait MongoPubSubManagerActor extends Actor {
         listener ! AddListenerResponse(key, actorId)
       }
     case SaveRequest(key, bytes) => save(key, bytes)
-    case LoadRequest(key, bytes) => manager.save(key, bytes)
+    case LoadRequest(key, bytes) =>
+      manager.save(key, bytes)
 
     case ReceivedAckRequest(key, dataId, listenerId) =>
       manager.waitForNext(key, dataId, listenerId)
@@ -88,7 +89,7 @@ trait MongoPubSubManagerActor extends Actor {
         connectionCollection.remove(BSONDocument("lastConnect" -> BSONDocument("$lt" -> (System.currentTimeMillis - consumeTimeout.toMillis))), firstMatchOnly = false)
         dataCollection.remove(BSONDocument("createdAt" -> BSONDocument("$lt" -> (System.currentTimeMillis - consumeTimeout.toMillis))), firstMatchOnly = false)
       }
-      in(5.minutes) {
+      in(1.minute) {
         self ! Clean
       }
   }
@@ -159,7 +160,7 @@ trait MongoPubSubManagerActor extends Actor {
   }
 
   private def scheduleSearch() {
-    in(300.milliseconds) {
+    in(400.milliseconds) {
       self ! LoadSearch
     }
   }
@@ -179,6 +180,7 @@ trait MongoPubSubManagerActor extends Actor {
       x.value.filter(_.get("retainCt").get.asInstanceOf[BSONInteger].value == 0).map { q =>
         dataCollection.remove(BSONDocument("transactionId" -> transactionId), writeConcern = GetLastError.Acknowledged)
       }.getOrElse(Future.successful(Unit))
+
     }
   }
 
@@ -193,8 +195,9 @@ trait MongoPubSubManagerActor extends Actor {
       }
       else {
         val now = System.currentTimeMillis
-        val selector = BSONDocument("listenerId" -> serverId, "lastConnect" -> BSONDocument("$gt" -> (now - localTimeout.toMinutes)))
-        val update = BSONDocument("lastConnect" -> now)
+        val selector = BSONDocument("listenerId" -> serverId, "lastConnect" -> BSONDocument("$gt" -> (now - localTimeout.toMillis)), "key" -> BSONDocument("$in" -> manager.keys))
+        val update = BSONDocument("$set" -> BSONDocument("lastConnect" -> now))
+
         val connectionUpdate = connectionCollection.update(selector, update, multi = true, upsert = false)
         connectionUpdate.onSuccess { case _ =>
           lastConnect = now

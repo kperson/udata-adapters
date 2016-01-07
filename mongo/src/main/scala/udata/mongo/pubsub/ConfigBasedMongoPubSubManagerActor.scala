@@ -6,7 +6,7 @@ import udata.mongo.MongoSupportConfig
 import udata.pubsub.{LocalPubSubManager, PubSubManager}
 
 
-class ConfigBasedMongoPubSubManagerActor extends MongoPubSubManagerActor {
+class ConfigBasedMongoPubSubManagerActor() extends MongoPubSubManagerActor {
 
   lazy val config = MongoSupportConfig.defaultConfig
   lazy val connectionCollection: BSONCollection = config.database(config.pubSubConnectionCollection)

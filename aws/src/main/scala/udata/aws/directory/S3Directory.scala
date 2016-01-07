@@ -39,10 +39,20 @@ trait S3Directory extends Directory {
     Future {
       val pathAsStr = if (path.isEmpty) "/" else path.mkString("/") + "/"
       scala.concurrent.blocking {
-        s3.ls(bucket, pathAsStr).flatMap {
+        s3.ls(bucket, if(path.isEmpty) "" else pathAsStr).flatMap {
           case Left(prefix) =>
             val withTrailingSlash = prefix.replaceFirst(pathAsStr, "")
-            Some(withTrailingSlash.substring(0, withTrailingSlash.length - 1))
+            if (!withTrailingSlash.isEmpty) {
+              if (path.isEmpty) {
+                Some(withTrailingSlash)
+              }
+              else {
+                Some(withTrailingSlash.substring(0, withTrailingSlash.length - 1))
+              }
+            }
+            else {
+              None
+            }
           case _ => None
         }.toList
       }
@@ -53,7 +63,7 @@ trait S3Directory extends Directory {
     Future {
       scala.concurrent.blocking {
         val pathAsStr = if (path.isEmpty) "/" else path.mkString("/") + "/"
-        s3.ls(bucket, pathAsStr).flatMap {
+        s3.ls(bucket, if(path.isEmpty) "" else pathAsStr).flatMap {
           case Right(summary) => Some(summary.getKey.replaceFirst(pathAsStr, ""))
           case z => None
         }.toList
@@ -62,11 +72,16 @@ trait S3Directory extends Directory {
   }
 
   def fileContents(path: List[String]): Future[Option[() => InputStream]] = {
-    Future {
-      scala.concurrent.blocking {
-        s3.get(bucket, path.mkString("/")).map { a =>
-          () => {
-            a.content
+    if(path.isEmpty) {
+     Future.successful(None)
+    }
+    else {
+      Future {
+        scala.concurrent.blocking {
+          s3.get(bucket, path.mkString("/")).map { a =>
+            () => {
+              a.content
+            }
           }
         }
       }
@@ -95,12 +110,22 @@ trait S3Directory extends Directory {
     Future {
       val pathAsStr = if (path.isEmpty) "/" else path.mkString("/") + "/"
       scala.concurrent.blocking {
-        val listing = s3.ls(bucket, pathAsStr).map {
+        val listing = s3.ls(bucket, if(path.isEmpty) "" else pathAsStr).flatMap {
           case Left(prefix) =>
             val withTrailingSlash = prefix.replaceFirst(pathAsStr, "")
-            S3Listing(withTrailingSlash.substring(0, withTrailingSlash.length - 1), false)
+            if (!withTrailingSlash.isEmpty) {
+              if (path.isEmpty) {
+                Some(S3Listing(withTrailingSlash, false))
+              }
+              else {
+                Some(S3Listing(withTrailingSlash.substring(0, withTrailingSlash.length - 1), false))
+              }
+            }
+            else {
+              None
+            }
           case Right(summary) =>
-            S3Listing(summary.getKey.replaceFirst(pathAsStr, ""), true)
+            Some(S3Listing(summary.getKey.replaceFirst(pathAsStr, ""), true))
         }
         val f = listing.filter(_.isFile == true).map {
           _.resource

@@ -1,6 +1,7 @@
 package udata.mongo
 
 import com.typesafe.config.{ConfigFactory, Config}
+
 import reactivemongo.api.{DefaultDB, MongoDriver, MongoConnection}
 
 
