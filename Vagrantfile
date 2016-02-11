@@ -2,6 +2,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.box = "tallypix/tallyho"
   config.vm.box_url = "https://s3.amazonaws.com/tallyhovirtualbox/tallyho.json"
+  config.vm.box_version = "0.3.0"
   config.ssh.password = "vagrant"
   config.ssh.username = "vagrant"
 

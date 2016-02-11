@@ -139,7 +139,7 @@ trait S3Directory extends Directory {
   }
 }
 
-class CloseNoticeFileOutputStream(fileName: String)(handler:(File) => Any) extends FileOutputStream(fileName) {
+class  CloseNoticeFileOutputStream(fileName: String)(handler:(File) => Any) extends FileOutputStream(fileName) {
 
   override def close() {
     super.close()

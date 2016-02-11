@@ -2,11 +2,11 @@ import spray.revolver.RevolverPlugin.Revolver
 
 @inline def env(n: String): Option[String] = sys.env.get(n)
 
-val uDataVersion = "0.0.7-SNAPSHOT"
+val uDataVersion = "0.0.30-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "com.udata",
-  version := "0.0.11-SNAPSHOT",
+  version := "0.0.31-SNAPSHOT",
   scalaVersion := "2.11.7",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:existentials"),
   publishTo := {
