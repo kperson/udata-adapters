@@ -1,8 +1,12 @@
 package udata.aws.directory
 
+import awscala.{CredentialsLoader, CredentialsProvider, Credentials, BasicCredentialsProvider}
 import awscala.s3._
 
 import java.io._
+
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.services.s3.AmazonS3Client
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,20 +24,13 @@ trait S3Directory extends Directory {
 
   import S3Directory._
 
-  //dependencies
-  def endpoint = "s3-external-1.amazonaws.com"
-
   def bucketName: String
-
   def s3: S3
 
   if (!s3.doesBucketExist(bucketName)) {
     s3.createBucket(bucketName)
   }
   val bucket = Bucket(bucketName)
-
-
-  s3.setEndpoint(endpoint)
 
   def directories(path: List[String]): Future[List[String]] = {
     Future {
@@ -91,10 +88,8 @@ trait S3Directory extends Directory {
   def addFile(fileName: List[String]): OutputStream = {
     val localFile = File.createTempFile("tempfile", ".tmp")
     new CloseNoticeFileOutputStream(localFile.getAbsolutePath)({ file =>
-      scala.concurrent.blocking {
-        s3.put(bucket, fileName.mkString("/"), file)
-        file.delete()
-      }
+      s3.put(bucket, fileName.mkString("/"), file)
+      file.delete()
     })
   }
 
@@ -149,3 +144,13 @@ class  CloseNoticeFileOutputStream(fileName: String)(handler:(File) => Any) exte
 
 }
 
+
+class S3ConfigClient(credentialsProvider: CredentialsProvider = CredentialsLoader.load(), config: ClientConfiguration)
+  extends AmazonS3Client(credentialsProvider, config)
+  with S3 {
+
+
+  def this(accessKeyId: String, secretAccessKey: String, config: ClientConfiguration) = this(BasicCredentialsProvider(accessKeyId, secretAccessKey), config)
+
+  override def createBucket(name: String): Bucket = super.createBucket(name)
+}

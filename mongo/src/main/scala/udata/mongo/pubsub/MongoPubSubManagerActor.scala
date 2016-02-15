@@ -160,7 +160,7 @@ trait MongoPubSubManagerActor extends Actor {
   }
 
   private def scheduleSearch() {
-    in(400.milliseconds) {
+    in(250.milliseconds) {
       self ! LoadSearch
     }
   }
